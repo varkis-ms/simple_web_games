@@ -3,30 +3,30 @@ package utils
 import (
 	"encoding/json"
 	"io"
-	"simple_web_games/pkg/logging"
 )
 
-func JsonDecode(logger *logging.Logger, body *io.ReadCloser, pattern interface{}) {
+func JsonDecode(body *io.ReadCloser, pattern interface{}) error {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			logger.Error(err)
+			panic(err)
 		}
 	}(*body)
 	req, err := io.ReadAll(*body)
 	if err != nil {
-		logger.Error(err)
+		return err
 	}
 	err = json.Unmarshal(req, pattern)
 	if err != nil {
-		logger.Errorf("can't unmarshal: %v", err)
+		return err
 	}
+	return nil
 }
 
-func JsonEncode(logger *logging.Logger, resp interface{}) []byte {
+func JsonEncode(resp interface{}) ([]byte, error) {
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
-		logger.WithError(err).Fatal("Error happened in JSON marshal")
+		return nil, err
 	}
-	return jsonResp
+	return jsonResp, nil
 }

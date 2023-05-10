@@ -8,33 +8,40 @@ import (
 )
 
 type TttGameField struct {
-	checkWin  bool
-	last      int
-	movesLeft int
-	size      int
-	field     [][]int
+	CheckWin  bool
+	Status    bool
+	Last      int
+	MovesLeft int
+	Size      int
+	Field     [][]int
 }
 
-func NewGameField(size *int) games.GameField {
-	field := make([][]int, *size)
+// NewGameField конструктор интерфейса
+func NewGameField(size int) games.GameField {
+	field := make([][]int, size)
 	for i := range field {
-		field[i] = make([]int, *size)
+		field[i] = make([]int, size)
 	}
 	rand.Seed(time.Now().UnixNano())
 	return &TttGameField{
-		field:     field,
-		last:      rand.Intn(2) + 1,
-		movesLeft: *size * *size,
-		size:      *size,
-		checkWin:  false,
+		CheckWin:  false,
+		Status:    true,
+		Last:      rand.Intn(2) + 1,
+		MovesLeft: size * size,
+		Size:      size,
+		Field:     field,
 	}
 }
 
+// Progress Валидация данных и возврат результата хода игрока
 func (f *TttGameField) Progress(row, col, user int) (int, bool, error) {
-	if f.last == user {
+	if f.Status == false {
+		return 0, false, apperror.ErrNoGame
+	}
+	if f.Last == user {
 		return 0, false, apperror.ErrWrongUser
 	}
-	field := f.field
+	field := f.Field
 	if len(field) <= row || len(field) <= col {
 		return 0, false, apperror.ErrIncorrectMove
 	}
@@ -42,24 +49,30 @@ func (f *TttGameField) Progress(row, col, user int) (int, bool, error) {
 		return 0, false, apperror.ErrFilledCell
 	}
 	field[row][col] = user
-	f.last = user
-	f.movesLeft--
-	if !f.checkWin {
-		if f.size*f.size-f.movesLeft >= f.size {
-			f.checkWin = true
+	f.Last = user
+	f.MovesLeft--
+	if !f.CheckWin {
+		if f.Size*f.Size-f.MovesLeft >= f.Size {
+			f.CheckWin = true
 		} else {
 			return 0, false, nil
 		}
 	}
 	winner := f.checkProgress(row, col)
 	if winner == 0 {
+		if f.MovesLeft == 0 {
+			f.Status = false
+			return 0, true, nil
+		}
 		return 0, false, nil
 	}
+	f.Status = false
 	return winner, true, nil
 }
 
+// checkProgress функцция для проверки окончания игры и определения победиты/ничьи по последнему ходу игрока
 func (f *TttGameField) checkProgress(row, col int) int {
-	field := f.field
+	field := f.Field
 	checkWin := field[row][0]
 	for _, v := range field[row] {
 		if v != checkWin {
@@ -103,4 +116,25 @@ func (f *TttGameField) checkProgress(row, col int) int {
 		}
 	}
 	return 0
+}
+
+// GetPrettyField Возвращает игровое поле в виде string с отформатированными значениями
+func (f *TttGameField) GetPrettyField() string {
+	prettyField := ""
+	for _, i := range f.Field {
+		for _, j := range i {
+			sym := ""
+			switch j {
+			case 1:
+				sym = "[O]"
+			case 2:
+				sym = "[X]"
+			default:
+				sym = "[ ]"
+			}
+			prettyField += sym
+		}
+		prettyField += "|"
+	}
+	return prettyField
 }

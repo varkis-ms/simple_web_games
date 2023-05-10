@@ -1,4 +1,4 @@
-package controllers
+package service
 
 import "github.com/julienschmidt/httprouter"
 

@@ -1,0 +1,175 @@
+basePath: /
+definitions:
+  apperror.AppError:
+    properties:
+      code:
+        type: string
+      developer_message:
+        type: string
+      message:
+        type: string
+    type: object
+  games.RequestComb:
+    properties:
+      col:
+        type: integer
+      row:
+        type: integer
+    type: object
+  games.RequestFieldSize:
+    properties:
+      size:
+        type: integer
+    type: object
+  games.ResponseCreate:
+    properties:
+      err:
+        type: string
+      message:
+        type: string
+      session_id:
+        type: string
+    type: object
+  games.ResponseGame:
+    properties:
+      err:
+        type: string
+      field:
+        type: string
+      message:
+        type: string
+      winner:
+        type: integer
+    type: object
+  games.ResponseJoin:
+    properties:
+      err:
+        type: string
+      game_id:
+        type: string
+      message:
+        type: string
+    type: object
+host: 127.0.0.1:8080
+info:
+  contact:
+    email: markin-2002@yandex.ru
+    name: Markin Sergey
+  description: Web service for playing turn-based games
+  title: Simple Web Games
+  version: "0.1"
+paths:
+  /create:
+    post:
+      consumes:
+      - application/json
+      description: Create a new game session
+      operationId: Create-game
+      parameters:
+      - description: Field size
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/games.RequestFieldSize'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Status Created
+          schema:
+            $ref: '#/definitions/games.ResponseCreate'
+        "418":
+          description: Failed to save session
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Create Game Session
+      tags:
+      - Games
+  /game/{game_id}:
+    post:
+      consumes:
+      - application/json
+      description: Making moves and determining the winner
+      operationId: Game-progress
+      parameters:
+      - description: game_token
+        in: header
+        name: Cookie
+        type: string
+      - description: Game ID
+        in: path
+        name: game_id
+        required: true
+        type: string
+      - description: User's move
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/games.RequestComb'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: move made
+          schema:
+            $ref: '#/definitions/games.ResponseGame'
+        "403":
+          description: no such session exists
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+        "418":
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/games.ResponseGame'
+      summary: Game Progress
+      tags:
+      - Games
+  /join/{session_id}:
+    get:
+      consumes:
+      - application/json
+      description: Connect to the created game session
+      operationId: Join-game
+      parameters:
+      - description: game_token
+        in: header
+        name: Cookie
+        type: string
+      - description: Session ID
+        in: path
+        name: session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: connection to the session was successful
+          schema:
+            $ref: '#/definitions/games.ResponseJoin'
+        "418":
+          description: unexpected error
+          schema:
+            $ref: '#/definitions/apperror.AppError'
+      summary: Join to Game Session
+      tags:
+      - Games
+  /list:
+    get:
+      consumes:
+      - application/json
+      description: Getting a list of available game sessions
+      operationId: Get-list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+      summary: Get List
+      tags:
+      - Games
+swagger: "2.0"

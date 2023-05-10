@@ -11,23 +11,21 @@ import (
 )
 
 var store *sessions.CookieStore
-var logger *logging.Logger
 
-func SetupCookieStorage(cfg *utils.StorageConfig, mainLogger *logging.Logger) {
+func SetupCookieStorage(cfg *utils.StorageConfig) {
 	store = sessions.NewCookieStore([]byte(cfg.SecretKey))
 	store.Options.MaxAge = 0
-	logger = mainLogger
 }
 
-func sessionMiddleware(h httprouter.Handle) httprouter.Handle {
+func sessionMiddleware(logger *logging.Logger, h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		w.Header().Set("Content-Type", "application/json")
 		session, err := store.Get(r, "game_token")
 		if err != nil {
 			session.Options.MaxAge = -1
 			w.WriteHeader(http.StatusTeapot)
-			logger.WithError(err).Error("bad session")
-			w.Write(apperror.ErrBadSession.Marshal())
+			logger.WithError(err).Error(apperror.ErrBadSession)
+			w.Write(apperror.ErrBadSession.JsonMarshal())
 			return
 		}
 		r = r.WithContext(context.WithValue(r.Context(), "session", session))

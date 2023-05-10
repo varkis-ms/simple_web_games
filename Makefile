@@ -14,5 +14,16 @@ build:
 run:
 	go run ./cmd/main
 
+unit-test:
+	go test ./...
 
-.PHONY: env build run
+swagger:
+	swag init -g cmd/main/main.go
+
+df:
+	docker build --tag simple_web_games .
+
+service_up:
+	docker-compose -f docker-compose.yml up -d --remove-orphans
+
+.PHONY: env build run swagger df service_up unit-test
